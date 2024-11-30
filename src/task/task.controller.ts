@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from "@nestjs/common";
 import { TaskService } from "./task.service";
 import { CreateTaskDTO } from "./dto/create-task.dto";
 import { UpdateTaskDTO } from "./dto/update-task.dto";
@@ -38,7 +38,18 @@ export class TaskController{
         }
     }
 
+    @Delete(':id')
+    deleteTask(@Param('id') id:string){
+        try {
+            const deleteOk = this.task.deleteTask(Number(id))
+            return deleteOk;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     @Put(':id')
+    @UsePipes(new ValidationPipe())
     async updateTask(@Param('id') id:string, @Body()task:UpdateTaskDTO){
         try {
             const updateTask = this.task.updateTask(Number(id), task)
@@ -47,4 +58,7 @@ export class TaskController{
             console.log(error);
         }
     }
+ 
+
+    
 }
