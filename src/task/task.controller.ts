@@ -1,62 +1,70 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, UsePipes, ValidationPipe } from "@nestjs/common";
 import { TaskService } from "./task.service";
 import { CreateTaskDTO } from "./dto/create-task.dto";
 import { UpdateTaskDTO } from "./dto/update-task.dto";
 
 @Controller('tasks')
 export class TaskController{
-    constructor(private readonly task: TaskService){}
+    constructor(private readonly taskService: TaskService){}
 
     @Get()
     async getAllTasks(){
-        try {
-            const taskFound = this.task.getAllTasks()
-            return taskFound;
-        } catch (error) {
-            console.log(error);
-        }
+        
+        const taskFound = await this.taskService.getAllTasks()
+        return taskFound;
+        
     }
 
     @Get(':id')
     async getTaskById(@Param('id') id:string){
-        try {
-            const taskFound = this.task.getTaskById(Number(id))
-            return taskFound
-        } catch (error) {
-            console.log(error);
+        const numericId = Number(id)
+        if(isNaN(numericId)){
+            throw new BadRequestException('Invalid task ID format')
         }
+        
+        const taskFound = await this.taskService.getTaskById(Number(id))
+        return taskFound;
+        
+            
+        
+ 
     }
 
     @Post()
     @UsePipes(new ValidationPipe())
     async createTask(@Body() task:CreateTaskDTO){
-        try {
-            const taskCreate = this.task.createTask(task)
-            return taskCreate
-        } catch (error) {
-            console.log(error);
-        }
+        
+        const taskCreate = await this.taskService.createTask(task)
+        return taskCreate
+        
     }
 
     @Delete(':id')
-    deleteTask(@Param('id') id:string){
-        try {
-            const deleteOk = this.task.deleteTask(Number(id))
-            return deleteOk;
-        } catch (error) {
-            console.log(error);
+    async deleteTask(@Param('id') id:string){
+        
+        const numericId = Number(id)
+        if(isNaN(numericId)){
+            throw new BadRequestException('Invalid task ID format')
         }
+        const deleteResult = await this.taskService.deleteTask(numericId)
+        if(!deleteResult) throw new NotFoundException('TaskNotFound')
+        return { message: 'Task successfully deleted', deleted: deleteResult };
+        
+        
     }
 
     @Put(':id')
     @UsePipes(new ValidationPipe())
     async updateTask(@Param('id') id:string, @Body()task:UpdateTaskDTO){
-        try {
-            const updateTask = this.task.updateTask(Number(id), task)
-            return updateTask
-        } catch (error) {
-            console.log(error);
+        const numericId = Number(id)
+        if(isNaN(numericId)){
+            throw new BadRequestException('Invalid task ID format')
         }
+        
+            
+        const updatedTask = await this.taskService.updateTask(numericId, task)
+        return { message: 'Task successfully updated', task: updatedTask };
+        
     }
  
 

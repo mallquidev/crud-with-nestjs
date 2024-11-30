@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { Task } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateTaskDTO } from "./dto/create-task.dto";
@@ -13,11 +13,15 @@ export class TaskService{
     }
 
     async getTaskById(id:number):Promise<Task>{
-        return this.prisma.task.findUnique({
-            where:{
-                id
-            }
-        })
+        const task = await this.prisma.task.findUnique({
+            where: { id },
+        });
+      
+        if (!task) {
+            throw new NotFoundException(`Task with ID ${id} not found`);
+        }
+      
+        return task;
     }
 
     async createTask(data:CreateTaskDTO):Promise<Task>{
@@ -26,21 +30,36 @@ export class TaskService{
         })
     }
 
-    async deleteTask(id:number):Promise<Task>{
-        return this.prisma.task.delete({
-            where: {
-                id
-            }
-        })
+    async deleteTask(id:number):Promise<Boolean>{
+        try {
+            await this.prisma.task.delete({
+              where: { id },
+            });
+      
+            return true;
+        }catch (error) {
+            return false;
+        }
+        
     }
 
     async updateTask(id:number, data:UpdateTaskDTO):Promise<Task>{
-        return this.prisma.task.update({
+        const taskExist = await this.prisma.task.findUnique({
+            where:{id}
+            
+        });
+        if(!taskExist) {
+            throw new NotFoundException(`Task with ID ${id} not found`)
+        }
+
+        const updateTask = await this.prisma.task.update({
             where:{
                 id
-            },
-            data
+            }, data
         })
+
+        return updateTask
+    
     }
 
     
